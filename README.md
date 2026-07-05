@@ -198,26 +198,10 @@ mingw32-make SFML_INC=-IC:/SFML/include SFML_LIB=-LC:/SFML/lib
 
 ---
 
-## 📤 قراردادن روی گیت‌هاب
-
-ابتدا در github.com یک ریپازیتوری خالی بساز (بدون README)، سپس از ریشه‌ی پروژه:
-
-```bash
-git init
-git add .
-git commit -m "Simple Doodle Jump - C++/SFML final project"
-git branch -M main
-git remote add origin https://github.com/<username>/simple-doodle-jump.git
-git push -u origin main
-```
-
-فایل `.gitignore` از پیش فایل‌های ساخت (`build/`, `*.o`, `*.exe`) را کنار می‌گذارد.
-
----
-
 ## 👤 نویسنده
 
-Amir — تمرین درس برنامه‌نویسی پیشرفته (C++).
+امیر
+---
 
 <div align="center">
 
