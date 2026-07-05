@@ -1,0 +1,6 @@
+# Build artefacts
+build/
+simple-doodle-jump
+simple-doodle-jump.exe
+*.o
+*.d
