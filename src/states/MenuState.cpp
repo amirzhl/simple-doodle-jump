@@ -8,8 +8,10 @@
 
 #include "states/MenuState.hpp"
 
+#include "audio/AudioManager.hpp"
 #include "core/Constants.hpp"
 #include "core/Game.hpp"
+#include "core/Settings.hpp"
 #include "ui/Layout.hpp"
 
 #include <SFML/Graphics/RenderWindow.hpp>
@@ -31,8 +33,11 @@ MenuState::MenuState(Game& game) : State(game) {
 	ui::centerTextHorizontally(title_text_, screen_width / 2.0f,
 	                           screen_height * 0.18f);
 
+	// Best score is tracked per difficulty; show the active difficulty's best.
+	const Difficulty level = game_.settings().difficulty();
 	high_score_text_.setFont(font);
-	high_score_text_.setString("Best: " + std::to_string(game_.highScore()));
+	high_score_text_.setString("Best (" + std::string(difficulty::name(level)) +
+	                           "): " + std::to_string(game_.highScore()));
 	high_score_text_.setCharacterSize(cfg::ui::LABEL_TEXT_SIZE);
 	high_score_text_.setFillColor(cfg::ui::TEXT_COLOR);
 	ui::centerTextHorizontally(high_score_text_, screen_width / 2.0f,
@@ -40,7 +45,21 @@ MenuState::MenuState(Game& game) : State(game) {
 
 	start_button_ = std::make_unique<Button>(
 		game_.textures().acquire(cfg::assets::START_BUTTON),
-		sf::Vector2f(screen_width / 2.0f, screen_height * 0.6f));
+		sf::Vector2f(screen_width / 2.0f, screen_height * 0.55f));
+	settings_button_ = std::make_unique<Button>(
+		game_.textures().acquire(cfg::assets::SETTINGS_BUTTON),
+		sf::Vector2f(screen_width / 2.0f, screen_height * 0.70f));
+
+	// Controls hint requested by the TA: make the movement keys explicit.
+	hint_text_.setFont(font);
+	hint_text_.setString("Use Left / Right arrows to move");
+	hint_text_.setCharacterSize(cfg::ui::HINT_TEXT_SIZE);
+	hint_text_.setFillColor(cfg::ui::TEXT_COLOR);
+	ui::centerTextHorizontally(hint_text_, screen_width / 2.0f,
+	                           screen_height * 0.88f);
+
+	// Start (or keep) the looping menu music.
+	game_.audio().playMenuMusic();
 }
 
 void MenuState::handleEvent(const sf::Event& event) {
@@ -51,6 +70,8 @@ void MenuState::handleEvent(const sf::Event& event) {
 			game_.window().getDefaultView());
 		if (start_button_->contains(point)) {
 			game_.requestState(StateId::Play);
+		} else if (settings_button_->contains(point)) {
+			game_.requestState(StateId::Settings);
 		}
 	}
 }
@@ -63,4 +84,6 @@ void MenuState::render(sf::RenderWindow& window) {
 	window.draw(title_text_);
 	window.draw(high_score_text_);
 	start_button_->draw(window);
+	settings_button_->draw(window);
+	window.draw(hint_text_);
 }

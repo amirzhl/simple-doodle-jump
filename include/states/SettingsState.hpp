@@ -8,38 +8,43 @@
 
 #pragma once
 
+#include "core/Difficulty.hpp"
 #include "states/State.hpp"
 #include "ui/Button.hpp"
+#include "ui/Slider.hpp"
 
-#include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Text.hpp>
+#include <array>
 #include <memory>
 
 // ---------------------------------------------------------------------------
-//  GameOverState  -- the "YOU LOST" screen. Shows the final score and the
-//  best score, and offers two mouse buttons:
-//    * Restart   -> start a new session immediately (no trip through the menu)
-//    * Main Menu -> return to the main menu
+//  SettingsState  -- reachable ONLY from the main menu (never during play).
+//  It lets the player:
+//    * drag a slider to set the master volume (applied live to all audio)
+//    * pick one of three difficulties (Easy / Medium / Hard)
+//  Pressing Back saves the choices to settings.txt and returns to the menu.
+//  Background music keeps playing on this screen (as on the menu).
 // ---------------------------------------------------------------------------
-class GameOverState : public State {
+class SettingsState : public State {
 public:
-	explicit GameOverState(Game& game);
+	explicit SettingsState(Game& game);
 
 	void handleEvent(const sf::Event& event) override;
 	void update(float dt) override;
 	void render(sf::RenderWindow& window) override;
 
 private:
+	void applyDifficulty(Difficulty level);
+	void refreshVolumeLabel();
+	void refreshDifficultyColors();
+	sf::Vector2f mapMouse(int x, int y) const;
+
 	sf::Sprite background_;
-	sf::Sprite death_frame_;      // frozen "where you lost" snapshot
-	sf::RectangleShape matte_;    // frosted veil drawn over the snapshot
-	bool has_death_frame_ = false;
-	sf::Text game_over_text_;
-	sf::Text score_text_;
-	sf::Text high_score_text_;
-	sf::Text new_best_text_; // shown only when a new record was set
-	bool is_new_best_ = false;
-	std::unique_ptr<Button> restart_button_;
-	std::unique_ptr<Button> menu_button_;
+	sf::Text title_text_;
+	sf::Text volume_label_;
+	Slider volume_slider_;
+	sf::Text difficulty_label_;
+	std::array<sf::Text, difficulty::COUNT> difficulty_options_;
+	std::unique_ptr<Button> back_button_;
 };

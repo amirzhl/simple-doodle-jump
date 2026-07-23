@@ -33,10 +33,20 @@ void NormalPlatform::update(float dt) {
 }
 
 
-float NormalPlatform::onLand(Player& /*player*/) {
+float NormalPlatform::onLand(Player& player) {
+	// The spring only fires when the player actually lands ON the spring:
+	// their horizontal spans must overlap. Landing on the bare part of the
+	// platform gives a normal jump, exactly like the original game.
 	if (spring_) {
-		spring_->compress();
-		return cfg::physics::SPRING_JUMP;
+		const sf::FloatRect player_bounds = player.getBounds();
+		const sf::FloatRect spring_bounds = spring_->getBounds();
+		const bool touches_spring =
+			player_bounds.left < spring_bounds.left + spring_bounds.width &&
+			spring_bounds.left < player_bounds.left + player_bounds.width;
+		if (touches_spring) {
+			spring_->compress();
+			return cfg::physics::SPRING_JUMP;
+		}
 	}
 	return cfg::physics::NORMAL_JUMP;
 }

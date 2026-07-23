@@ -13,8 +13,9 @@
 
 #include <SFML/Graphics/Texture.hpp>
 
-MovingPlatform::MovingPlatform(const sf::Texture& texture, sf::Vector2f position)
-	: Platform(texture, position) {
+MovingPlatform::MovingPlatform(const sf::Texture& texture, sf::Vector2f position,
+                               float speed)
+	: Platform(texture, position), speed_(speed) {
 	// Start moving in a random direction.
 	direction_ = Random::chance(0.5f) ? 1.0f : -1.0f;
 }
@@ -23,7 +24,7 @@ void MovingPlatform::update(float dt) {
 	const float width = getBounds().width;
 	const float screen_width = static_cast<float>(cfg::window::WIDTH);
 
-	position_.x += direction_ * cfg::platform::MOVING_SPEED * dt;
+	position_.x += direction_ * speed_ * dt;
 
 	// Bounce off the screen edges.
 	if (position_.x <= 0.0f) {

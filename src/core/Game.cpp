@@ -12,6 +12,7 @@
 #include "states/GameOverState.hpp"
 #include "states/MenuState.hpp"
 #include "states/PlayState.hpp"
+#include "states/SettingsState.hpp"
 #include "states/State.hpp"
 
 #include <SFML/System/Clock.hpp>
@@ -20,13 +21,19 @@
 
 namespace {
 const char* HIGH_SCORE_FILE = "highscore.txt";
+const char* SETTINGS_FILE = "settings.txt";
 } // namespace
 
 Game::Game()
 	: window_(sf::VideoMode(cfg::window::WIDTH, cfg::window::HEIGHT),
 	          cfg::window::TITLE, sf::Style::Titlebar | sf::Style::Close) {
 	window_.setFramerateLimit(cfg::window::FRAMERATE_LIMIT);
-	loadHighScore();
+
+	// Load persisted settings first, then apply the saved volume to all audio.
+	settings_.load(SETTINGS_FILE);
+	audio_.setVolume(settings_.volume());
+
+	loadHighScores();
 	current_state_ = createState(StateId::Menu);
 }
 
@@ -91,6 +98,8 @@ std::unique_ptr<State> Game::createState(StateId id) {
 	switch (id) {
 		case StateId::Menu:
 			return std::make_unique<MenuState>(*this);
+		case StateId::Settings:
+			return std::make_unique<SettingsState>(*this);
 		case StateId::Play:
 			return std::make_unique<PlayState>(*this);
 		case StateId::GameOver:
@@ -99,27 +108,46 @@ std::unique_ptr<State> Game::createState(StateId id) {
 	return std::make_unique<MenuState>(*this);
 }
 
+int Game::highScore() const {
+	return high_scores_[static_cast<std::size_t>(
+		difficulty::toIndex(settings_.difficulty()))];
+}
+
 void Game::submitScore(int score) {
 	last_score_ = score;
-	if (score > high_score_) {
-		high_score_ = score;
-		saveHighScore();
+	const std::size_t index =
+		static_cast<std::size_t>(difficulty::toIndex(settings_.difficulty()));
+	if (score > high_scores_[index]) {
+		high_scores_[index] = score;
+		saveHighScores();
 	}
 }
 
-void Game::loadHighScore() {
+void Game::saveSettings() const {
+	settings_.save(SETTINGS_FILE);
+}
+
+void Game::loadHighScores() {
 	std::ifstream in(HIGH_SCORE_FILE);
-	if (in) {
+	if (!in) {
+		return;
+	}
+	// One line per difficulty; tolerate a short/old file by keeping defaults.
+	for (std::size_t i = 0; i < high_scores_.size(); ++i) {
 		int value = 0;
 		if (in >> value && value >= 0) {
-			high_score_ = value;
+			high_scores_[i] = value;
+		} else {
+			break;
 		}
 	}
 }
 
-void Game::saveHighScore() const {
+void Game::saveHighScores() const {
 	std::ofstream out(HIGH_SCORE_FILE, std::ios::trunc);
 	if (out) {
-		out << high_score_ << '\n';
+		for (int value : high_scores_) {
+			out << value << '\n';
+		}
 	}
 }

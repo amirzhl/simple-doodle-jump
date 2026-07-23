@@ -8,21 +8,26 @@
 
 #pragma once
 
+#include "audio/AudioManager.hpp"
+#include "core/Difficulty.hpp"
 #include "core/ResourceManager.hpp"
+#include "core/Settings.hpp"
 #include "states/StateId.hpp"
 
 #include <SFML/Graphics/Font.hpp>
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/Graphics/Texture.hpp>
+#include <array>
 #include <memory>
 
 class State;
 
 // ---------------------------------------------------------------------------
 //  Game  -- the application root. It owns the window, the shared resource
-//  caches, the persistent high score, and the currently active State. It runs
-//  the three-phase game loop (process events -> update -> render) and performs
-//  safe, deferred state transitions.
+//  caches, the audio manager, the persistent settings, the per-difficulty
+//  high scores, and the currently active State. It runs the three-phase game
+//  loop (process events -> update -> render) and performs safe, deferred
+//  state transitions.
 // ---------------------------------------------------------------------------
 class Game {
 public:
@@ -43,12 +48,28 @@ public:
 	sf::RenderWindow& window() { return window_; }
 	ResourceManager<sf::Texture>& textures() { return textures_; }
 	ResourceManager<sf::Font>& fonts() { return fonts_; }
+	AudioManager& audio() { return audio_; }
+	Settings& settings() { return settings_; }
 
-	int highScore() const { return high_score_; }
+	// Best score for the currently selected difficulty.
+	int highScore() const;
 	int lastScore() const { return last_score_; }
 
-	// Record a finished session's score; updates and persists the high score.
+	// Record a finished session's score; updates and persists the best score
+	// for the current difficulty.
 	void submitScore(int score);
+
+	// Persist the current settings (called when leaving the settings screen).
+	void saveSettings() const;
+
+	// The final gameplay frame ("where you lost"), captured when a session ends
+	// so the game-over screen can show it, frosted, behind its UI.
+	void setLastFrame(const sf::Texture& frame) {
+		last_frame_ = frame;
+		has_last_frame_ = true;
+	}
+	const sf::Texture& lastFrame() const { return last_frame_; }
+	bool hasLastFrame() const { return has_last_frame_; }
 
 private:
 	void processEvents();
@@ -57,17 +78,24 @@ private:
 	void applyPendingState();
 	std::unique_ptr<State> createState(StateId id);
 
-	void loadHighScore();
-	void saveHighScore() const;
+	void loadHighScores();
+	void saveHighScores() const;
 
 	sf::RenderWindow window_;
 	ResourceManager<sf::Texture> textures_;
 	ResourceManager<sf::Font> fonts_;
+	AudioManager audio_;
+	Settings settings_;
 
 	std::unique_ptr<State> current_state_;
 	StateId pending_state_ = StateId::Menu;
 	bool has_pending_state_ = false;
 
-	int high_score_ = 0;
+	// One stored best score per difficulty (Easy / Medium / Hard).
+	std::array<int, difficulty::COUNT> high_scores_{};
 	int last_score_ = 0;
+
+	// Snapshot of the final gameplay frame, shown on the game-over screen.
+	sf::Texture last_frame_;
+	bool has_last_frame_ = false;
 };

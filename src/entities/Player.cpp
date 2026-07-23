@@ -12,12 +12,14 @@
 
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/Window/Keyboard.hpp>
-#include <algorithm>
-#include <cmath>
 
-Player::Player(const sf::Texture& left_texture, const sf::Texture& right_texture)
-	: left_texture_(left_texture), right_texture_(right_texture) {
-	sprite_.setTexture(right_texture_);
+Player::Player(const sf::Texture& left_texture, const sf::Texture& right_texture,
+               const sf::Texture& shooting_texture)
+	: left_texture_(left_texture), right_texture_(right_texture),
+	  shooting_texture_(shooting_texture) {
+	// resetRect = true: the three doodle textures have different sizes, so
+	// the texture rect must always follow the texture that is set.
+	sprite_.setTexture(right_texture_, true);
 	sprite_.setScale(cfg::player::SCALE, cfg::player::SCALE);
 }
 
@@ -27,7 +29,10 @@ void Player::reset(sf::Vector2f start_position) {
 	start_y_ = start_position.y;
 	highest_y_ = start_position.y;
 	score_ = 0;
-	sprite_.setTexture(right_texture_);
+	shooting_ = false;
+	facing_right_ = true;
+	sprite_.setScale(cfg::player::SCALE, cfg::player::SCALE);
+	sprite_.setTexture(right_texture_, true);
 	syncSprite();
 }
 
@@ -35,10 +40,14 @@ void Player::handleInput() {
 	velocity_.x = 0.0f;
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
 		velocity_.x = -cfg::player::MOVE_SPEED;
-		sprite_.setTexture(left_texture_);
+		facing_right_ = false;
 	} else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
 		velocity_.x = cfg::player::MOVE_SPEED;
-		sprite_.setTexture(right_texture_);
+		facing_right_ = true;
+	}
+	// While shooting the pose is fixed; otherwise reflect the facing direction.
+	if (!shooting_) {
+		refreshDirectionTexture();
 	}
 }
 
@@ -73,6 +82,39 @@ void Player::draw(sf::RenderTarget& target) const {
 	target.draw(sprite_);
 }
 
+void Player::startShooting() {
+	if (shooting_) {
+		return;
+	}
+	shooting_ = true;
+	switchTexture(shooting_texture_);
+}
+
+void Player::stopShooting() {
+	if (!shooting_) {
+		return;
+	}
+	shooting_ = false;
+	refreshDirectionTexture();
+}
+
+sf::Vector2f Player::getMuzzlePosition() const {
+	const sf::FloatRect bounds = sprite_.getGlobalBounds();
+	return sf::Vector2f(bounds.left + bounds.width / 2.0f, bounds.top);
+}
+
+void Player::setCenter(sf::Vector2f center) {
+	const sf::FloatRect bounds = sprite_.getGlobalBounds();
+	position_.x = center.x - bounds.width / 2.0f;
+	position_.y = center.y - bounds.height / 2.0f;
+	syncSprite();
+}
+
+void Player::setVisualScale(float scale) {
+	sprite_.setScale(scale, scale);
+	syncSprite();
+}
+
 void Player::wrapHorizontally() {
 	const float width = sprite_.getGlobalBounds().width;
 	const float screen_width = static_cast<float>(cfg::window::WIDTH);
@@ -91,6 +133,22 @@ void Player::updateScore() {
 	if (score_ < 0) {
 		score_ = 0;
 	}
+}
+
+void Player::refreshDirectionTexture() {
+	switchTexture(facing_right_ ? right_texture_ : left_texture_);
+}
+
+void Player::switchTexture(const sf::Texture& texture) {
+	// The doodle textures are not the same size (e.g. the shooting pose is
+	// 62x60 while the side poses are 93x80/84). Reset the texture rect and
+	// re-anchor the feet so the swap never disturbs the physics.
+	const sf::FloatRect old_bounds = sprite_.getGlobalBounds();
+	sprite_.setTexture(texture, true);
+	const sf::FloatRect new_bounds = sprite_.getGlobalBounds();
+	position_.x += (old_bounds.width - new_bounds.width) / 2.0f;
+	position_.y += old_bounds.height - new_bounds.height;
+	syncSprite();
 }
 
 void Player::syncSprite() {

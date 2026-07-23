@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include "core/Constants.hpp"
+
 #include <vector>
 
 template <typename Resource>
@@ -32,18 +34,21 @@ class Platform;
 //  platforms never appear in a row, so the player can always skip a single
 //  breakable by jumping from the safe platform below straight to the safe
 //  platform above. Horizontal reachability is guaranteed by screen wrap.
+//
+//  Phase 2: the moving-platform speed is injected (harder difficulties make
+//  moving platforms faster). The World composes this class and adds the side
+//  hazards (monsters and holes) beside the rungs it produces.
 // ---------------------------------------------------------------------------
 class PlatformManager {
 public:
-	explicit PlatformManager(ResourceManager<sf::Texture>& textures);
+	explicit PlatformManager(ResourceManager<sf::Texture>& textures,
+	                         float moving_speed = cfg::platform::MOVING_SPEED);
 	~PlatformManager();
 
 	PlatformManager(const PlatformManager&) = delete;
 	PlatformManager& operator=(const PlatformManager&) = delete;
 
-	// Clear everything and build a fresh starting world. Returns the top-centre
-	// position of the guaranteed starting platform so the player can be placed
-	// on top of it.
+	// Clear everything and build a fresh starting world.
 	void reset();
 
 	// Advance platforms and keep the world populated / trimmed for the current
@@ -51,6 +56,7 @@ public:
 	void update(float dt, float world_top, float world_bottom);
 
 	std::vector<Platform*>& platforms() { return platforms_; }
+	const std::vector<Platform*>& platforms() const { return platforms_; }
 
 	// The y of the very first (starting) platform's top surface.
 	float startingPlatformTop() const { return starting_platform_top_; }
@@ -66,6 +72,7 @@ private:
 	bool lastPlatformIsBreakable() const;
 
 	ResourceManager<sf::Texture>& textures_;
+	float moving_speed_;
 	std::vector<Platform*> platforms_;
 	float highest_y_ = 0.0f;       // y of the highest platform generated so far
 	float starting_platform_top_ = 0.0f;

@@ -16,8 +16,10 @@
 #include <memory>
 
 // ---------------------------------------------------------------------------
-//  MenuState  -- the main menu: game title, the best score so far, and a
-//  Start button that begins a new gameplay session on a mouse click.
+//  MenuState  -- the main menu: game title, the best score for the currently
+//  selected difficulty, a Start button that begins a new session, and a
+//  Settings button that opens the settings screen. The menu also starts the
+//  looping background music.
 // ---------------------------------------------------------------------------
 class MenuState : public State {
 public:
@@ -31,5 +33,7 @@ private:
 	sf::Sprite background_;
 	sf::Text title_text_;
 	sf::Text high_score_text_;
+	sf::Text hint_text_; // "Use Left / Right arrows to move"
 	std::unique_ptr<Button> start_button_;
+	std::unique_ptr<Button> settings_button_;
 };

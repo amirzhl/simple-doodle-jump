@@ -9,7 +9,8 @@
 #    make run      build and run
 #    make clean    remove build artefacts
 #
-#  Requirements: g++ with C++17 and SFML (graphics, window, system) installed.
+#  Requirements: g++ with C++17 and SFML (graphics, window, audio, system)
+#  installed.
 #  If SFML lives in a custom location, override the paths, e.g.:
 #    make SFML_INC=-IC:/SFML/include SFML_LIB=-LC:/SFML/lib
 # ===========================================================================
@@ -26,7 +27,9 @@ BUILD_DIR:= build
 # assumed to be on the default search path via a normal install / pkg config).
 SFML_INC ?=
 SFML_LIB ?=
-SFML_LIBS := -lsfml-graphics -lsfml-window -lsfml-system
+# Link order matters on some toolchains: dependents before dependencies
+# (graphics/window/audio all rely on system).
+SFML_LIBS := -lsfml-graphics -lsfml-window -lsfml-audio -lsfml-system
 
 CXXFLAGS += $(SFML_INC)
 LDFLAGS  += $(SFML_LIB)

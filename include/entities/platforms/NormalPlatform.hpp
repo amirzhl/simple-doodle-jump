@@ -36,6 +36,9 @@ public:
 
 	bool hasSpring() const { return spring_ != nullptr; }
 
+	// The attached spring (nullptr when this platform has none).
+	const Spring* spring() const { return spring_.get(); }
+
 private:
 	std::unique_ptr<Spring> spring_;
 };

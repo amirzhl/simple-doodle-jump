@@ -18,8 +18,9 @@
 
 #include <SFML/Graphics/Texture.hpp>
 
-PlatformManager::PlatformManager(ResourceManager<sf::Texture>& textures)
-	: textures_(textures) {}
+PlatformManager::PlatformManager(ResourceManager<sf::Texture>& textures,
+                                 float moving_speed)
+	: textures_(textures), moving_speed_(moving_speed) {}
 
 PlatformManager::~PlatformManager() {
 	clear();
@@ -105,7 +106,7 @@ Platform* PlatformManager::createPlatform(float x, float y, bool allow_breakable
 
 	if (choice == 1) {
 		return new MovingPlatform(textures_.acquire(cfg::assets::MOVING_PLATFORM),
-		                          pos);
+		                          pos, moving_speed_);
 	}
 	if (choice == 2) {
 		return new BreakablePlatform(

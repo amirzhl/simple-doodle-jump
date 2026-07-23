@@ -25,13 +25,18 @@ class Texture;
 //    * read keyboard input for horizontal movement
 //    * wrap around the screen edges
 //    * expose jump() so the collision system can launch it upward
+//    * (phase 2) switch to a shooting pose while firing and expose the muzzle
+//      point where bullets are spawned
+//    * (phase 2) support the hole "suction" animation via setCenter/
+//      setVisualScale, letting PlayState shrink the player into a hole
 //
-//  It does NOT know about platforms, springs or collision detection; those
-//  live in the CollisionSystem, which merely calls jump()/getBounds()/etc.
+//  It does NOT know about platforms, springs, monsters or bullets; those live
+//  in their own classes, which merely call jump()/getBounds()/etc.
 // ---------------------------------------------------------------------------
 class Player : public Entity {
 public:
-	Player(const sf::Texture& left_texture, const sf::Texture& right_texture);
+	Player(const sf::Texture& left_texture, const sf::Texture& right_texture,
+	       const sf::Texture& shooting_texture);
 
 	// Read the arrow keys and set the horizontal velocity accordingly.
 	void handleInput();
@@ -56,17 +61,40 @@ public:
 
 	int getScore() const { return score_; }
 
+	// ---- shooting (phase 2) ----
+	// Enter / leave the shooting pose. While shooting, the sprite shows the
+	// dedicated "shooting" texture regardless of movement direction.
+	void startShooting();
+	void stopShooting();
+	bool isShooting() const { return shooting_; }
+
+	// World-space point (top centre of the sprite) where bullets appear.
+	sf::Vector2f getMuzzlePosition() const;
+
+	// ---- hole suction animation (phase 2) ----
+	// Move the player so that its centre sits at `center`.
+	void setCenter(sf::Vector2f center);
+	// Scale the sprite uniformly (used to shrink into a hole).
+	void setVisualScale(float scale);
+
 private:
 	void syncSprite();
 	void wrapHorizontally();
 	void updateScore();
+	void refreshDirectionTexture();
+	// Swap the sprite texture (resetting its rect) while keeping the feet
+	// anchored, because the doodle textures have different sizes.
+	void switchTexture(const sf::Texture& texture);
 
 	const sf::Texture& left_texture_;
 	const sf::Texture& right_texture_;
+	const sf::Texture& shooting_texture_;
 	sf::Sprite sprite_;
 
 	sf::Vector2f velocity_{0.0f, 0.0f};
 	float start_y_ = 0.0f;   // vertical position when the session began
 	float highest_y_ = 0.0f; // smallest y (= greatest height) ever reached
 	int score_ = 0;
+	bool shooting_ = false;
+	bool facing_right_ = true;
 };

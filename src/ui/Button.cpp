@@ -15,9 +15,12 @@
 
 Button::Button(const sf::Texture& texture, sf::Vector2f center) {
 	sprite_.setTexture(texture);
-	sprite_.setScale(cfg::ui::BUTTON_SCALE, cfg::ui::BUTTON_SCALE);
-	// Centre the origin so `center` positions the button by its middle.
+	// Scale to a fixed on-screen width so all buttons look consistent even
+	// though their source images have different resolutions.
 	const sf::FloatRect local = sprite_.getLocalBounds();
+	const float scale = cfg::ui::BUTTON_TARGET_WIDTH / local.width;
+	sprite_.setScale(scale, scale);
+	// Centre the origin so `center` positions the button by its middle.
 	sprite_.setOrigin(local.width / 2.0f, local.height / 2.0f);
 	sprite_.setPosition(center);
 }

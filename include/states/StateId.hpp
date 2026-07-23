@@ -8,10 +8,12 @@
 
 #pragma once
 
-// The three top-level game states, matching the spec's state diagram:
+// The top-level game states, matching the spec's state diagram:
 //   Menu -> Play -> GameOver -> (Play again | back to Menu)
+//   Menu -> Settings -> Menu   (settings are only reachable from the menu)
 enum class StateId {
 	Menu,
+	Settings,
 	Play,
 	GameOver,
 };
